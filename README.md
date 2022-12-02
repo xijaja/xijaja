@@ -1,5 +1,16 @@
 ### Hi there 👋
 
+---
+
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=xijaja&hide=html,css,javascript,svelte&layout=compact)
+
+<a href="https://github.com/xijaja">
+    <img align="center" src="https://github-readme-stats.vercel.app/api/top-langs/?username=xijaja&hide=html,css,javascript&layout=compact" />
+</a>
+<a href="https://github.com/xijaja">
+    <img align="center" src="https://github-readme-stats.vercel.app/api?username=xijaja&hide=contribs&show_icons=true" />
+</a>
+
 
 <!--
 **xiwuou/xiwuou** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
