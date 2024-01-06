@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # 允许随时手动运行作业
   push:
     branches:
-    - master # 仅在 master 分支上触发
+    - main # 推送到 main 分支上时触发
     
 jobs:
   generate:
@@ -24,14 +24,48 @@ jobs:
           outputs: |
             dist/github-contribution-grid-snake-light.svg?color_snake=orange&palette=github-light
             dist/github-contribution-grid-snake-dark.svg?color_snake=#4489ec&palette=github-dark
+
+      # 状态卡片
+      - name: Stats Card (light mode)
+        uses: Zo-Bro-23/grs-action@main
+        id: stats-light
+        with:
+          token: ${{ secrets.TOKEN }}
+          options: "username=${{ github.repository_owner }}&include_all_commits=true&show_icons=true&hide_title=true&theme=vue&hide_border=true"
+          path: dist/stats-light.svg
+      - name: Stats Card (dark mode)
+        uses: Zo-Bro-23/grs-action@main
+        id: stats-dark
+        with:
+          token: ${{ secrets.TOKEN }}
+          options: "username=${{ github.repository_owner }}&include_all_commits=true&show_icons=true&hide_title=true&theme=dark&hide_border=true"
+          path: dist/stats-dark.svg
           
-          
+      # 常用语言
+      - name: Top Languages Card (light mode)
+        uses: Zo-Bro-23/grs-action@main
+        id: top-langs-light
+        with:
+          token: ${{ secrets.TOKEN }}
+          options: "username=${{ github.repository_owner }}&layout=compact&theme=vue&hide_border=true&hide=CSS,SCSS,Vue,JavaScript,HTML&langs_count=6"
+          card: "top-langs"
+          path: dist/top-langs-light.svg
+      - name: Top Languages Card (dark mode)
+        uses: Zo-Bro-23/grs-action@main
+        id: top-langs-dark
+        with:
+          token: ${{ secrets.TOKEN }}
+          options: "username=${{ github.repository_owner }}&layout=compact&theme=dark&hide_border=true&hide=CSS,SCSS,Vue,JavaScript,HTML&langs_count=6"
+          card: "top-langs"
+          path: dist/top-langs-dark.svg
+
       # push the content of <build_dir> to a branch
       # the content will be available at https://raw.githubusercontent.com/<github_user>/<repository>/<target_branch>/<file> , or as github page
-      - name: push snake.svg to the output branch 推送贪吃蛇动画到 output 分支
+      - name: push svg to the output branch 推送动画到 output 分支
         uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           target_branch: output
           build_dir: dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
