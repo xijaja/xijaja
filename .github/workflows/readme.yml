@@ -16,6 +16,14 @@ jobs:
         timeout-minutes: 5
 
         steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
             # generates a snake game from a github user (<github_user_name>) contributions graph, output a svg animation at <svg_out_path>
             - name: generate snake.svg 生成贪吃蛇动画
               uses: Platane/snk/svg-only@v3
@@ -25,14 +33,12 @@ jobs:
                       dist/github-contribution-grid-snake-light.svg?color_snake=orange&palette=github-light
                       dist/github-contribution-grid-snake-dark.svg?color_snake=#4489ec&palette=github-dark
 
-            # 用 curl 从 github-readme-stats 下载统计卡片 SVG
-            - name: Download stats and top-langs SVGs
-              run: |
-                  mkdir -p dist
-                  curl -o dist/stats-light.svg "https://github-readme-stats.vercel.app/api?username=xijaja&include_all_commits=true&show_icons=true&hide_title=true&theme=vue&hide_border=true"
-                  curl -o dist/stats-dark.svg "https://github-readme-stats.vercel.app/api?username=xijaja&include_all_commits=true&show_icons=true&hide_title=true&theme=dark&hide_border=true"
-                  curl -o dist/top-langs-light.svg "https://github-readme-stats.vercel.app/api/top-langs/?username=xijaja&layout=compact&theme=vue&hide_border=true&hide=CSS,SCSS,Vue,JavaScript,HTML&langs_count=6"
-                  curl -o dist/top-langs-dark.svg "https://github-readme-stats.vercel.app/api/top-langs/?username=xijaja&layout=compact&theme=dark&hide_border=true&hide=CSS,SCSS,Vue,JavaScript,HTML&langs_count=6"
+            - name: Generate stats and top-langs SVGs
+              env:
+                  PROFILE_TOKEN: ${{ secrets.TOKEN || github.token }}
+                  PROFILE_LOGIN: ${{ github.repository_owner }}
+                  PROFILE_INCLUDE_PRIVATE: ${{ secrets.TOKEN != '' }}
+              run: node scripts/generate-profile-cards.mjs
 
             # push the content of <build_dir> to a branch
             # the content will be available at https://raw.githubusercontent.com/<github_user>/<repository>/<target_branch>/<file> , or as github page
