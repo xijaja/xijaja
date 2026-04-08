@@ -184,26 +184,20 @@ function renderStatsCard(theme, stats) {
   const tiles = metrics.map((metric, index) => {
     const column = index % 2;
     const row = Math.floor(index / 2);
-    const x = 24 + column * 204;
-    const y = 52 + row * 50;
+    const x = 24 + column * 200;
+    const y = 54 + row * 50;
 
     return `
-      <rect x="${x}" y="${y}" width="188" height="38" rx="10" fill="${palette.panel}" />
+      <rect x="${x}" y="${y}" width="176" height="40" rx="10" fill="${palette.panel}" />
       <text x="${x + 14}" y="${y + 16}" font-size="11" fill="${palette.muted}">${escapeXml(metric.label)}</text>
       <text x="${x + 14}" y="${y + 31}" font-size="18" font-weight="700" fill="${palette.text}">${escapeXml(metric.value)}</text>
     `;
   }).join("");
 
-  const note = stats.includePrivate
-    ? `Private repositories included${stats.privateRepoCount ? ` (${stats.privateRepoCount})` : ""}`
-    : (stats.usedFallbackToken ? "Public repositories only (invalid TOKEN skipped)" : "Public repositories only");
-
   return `
-<svg width="460" height="170" viewBox="0 0 460 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} GitHub stats">
-  <rect x="0.5" y="0.5" width="459" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
+<svg width="430" height="170" viewBox="0 0 430 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} GitHub stats">
+  <rect x="0.5" y="0.5" width="429" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
   <text x="24" y="30" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="18" font-weight="700" fill="${palette.title}">${escapeXml(login)} GitHub Stats</text>
-  <text x="24" y="146" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${escapeXml(note)}</text>
-  <text x="24" y="160" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">Generated from the GitHub REST API</text>
   ${tiles}
 </svg>`.trimStart();
 }
@@ -230,28 +224,22 @@ function renderLanguagesCard(theme, stats) {
   const topLanguages = stats.languages.slice(0, 5);
   const chart = topLanguages.map((language, index) => {
     const percent = stats.totalLanguageBytes > 0 ? (language.size / stats.totalLanguageBytes) * 100 : 0;
-    const y = 48 + index * 22;
-    const width = Math.max(8, Math.round((percent / 100) * 150));
+    const y = 52 + index * 23;
+    const width = Math.max(8, Math.round((percent / 100) * 170));
 
     return `
       <text x="24" y="${y}" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.text}">${escapeXml(language.name)}</text>
-      <rect x="118" y="${y - 9}" width="150" height="8" rx="4" fill="${palette.track}" />
-      <rect x="118" y="${y - 9}" width="${width}" height="8" rx="4" fill="${language.color || palette.title}" />
-      <text x="278" y="${y}" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${percent.toFixed(1)}%</text>
+      <rect x="124" y="${y - 9}" width="170" height="8" rx="4" fill="${palette.track}" />
+      <rect x="124" y="${y - 9}" width="${width}" height="8" rx="4" fill="${language.color || palette.title}" />
+      <text x="306" y="${y}" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${percent.toFixed(1)}%</text>
     `;
   }).join("");
 
-  const note = stats.includePrivate
-    ? "Includes private repositories"
-    : (stats.usedFallbackToken ? "Public only, because TOKEN is invalid" : "Public repositories only");
-
   return `
-<svg width="355" height="170" viewBox="0 0 355 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} top languages">
-  <rect x="0.5" y="0.5" width="354" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
+<svg width="390" height="170" viewBox="0 0 390 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} top languages">
+  <rect x="0.5" y="0.5" width="389" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
   <text x="24" y="30" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="18" font-weight="700" fill="${palette.title}">Top Languages</text>
   ${chart}
-  <text x="24" y="146" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${escapeXml(note)}</text>
-  <text x="24" y="160" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">Aggregated from owned, non-fork repositories</text>
 </svg>`.trimStart();
 }
 
