@@ -6,82 +6,36 @@ const login = process.env.PROFILE_LOGIN;
 const outputDir = process.env.OUTPUT_DIR || "dist";
 const includePrivate = process.env.PROFILE_INCLUDE_PRIVATE === "true";
 
-if (!token) {
-  throw new Error("Missing PROFILE_TOKEN");
-}
-
 if (!login) {
   throw new Error("Missing PROFILE_LOGIN");
 }
 
-const query = `
-  query ProfileCards($login: String!, $after: String) {
-    user(login: $login) {
-      login
-      followers {
-        totalCount
-      }
-      following {
-        totalCount
-      }
-      repositories(
-        first: 100
-        after: $after
-        ownerAffiliations: OWNER
-        isFork: false
-        orderBy: { field: UPDATED_AT, direction: DESC }
-      ) {
-        totalCount
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-        nodes {
-          name
-          isPrivate
-          stargazerCount
-          languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
-            edges {
-              size
-              node {
-                name
-                color
-              }
-            }
-          }
-        }
-      }
-    }
-    rateLimit {
-      remaining
-      resetAt
-      cost
-    }
-  }
-`;
-
-async function githubGraphql(variables) {
-  const response = await fetch("https://api.github.com/graphql", {
-    method: "POST",
-    headers: {
-      Authorization: `bearer ${token}`,
-      "Content-Type": "application/json",
-      "User-Agent": "xijaja-profile-cards",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub GraphQL request failed: ${response.status} ${response.statusText}`);
-  }
-
-  const payload = await response.json();
-  if (payload.errors?.length) {
-    throw new Error(payload.errors.map((error) => error.message).join("; "));
-  }
-
-  return payload.data;
-}
+const languageColors = {
+  Astro: "#ff5d01",
+  C: "#555555",
+  "C#": "#178600",
+  "C++": "#f34b7d",
+  CSS: "#663399",
+  Dart: "#00B4AB",
+  Elixir: "#6e4a7e",
+  Go: "#00ADD8",
+  HTML: "#e34c26",
+  Java: "#b07219",
+  JavaScript: "#f1e05a",
+  Kotlin: "#A97BFF",
+  Lua: "#000080",
+  MDX: "#1b1f24",
+  PHP: "#4F5D95",
+  Python: "#3572A5",
+  Ruby: "#701516",
+  Rust: "#dea584",
+  SCSS: "#c6538c",
+  Shell: "#89e051",
+  Svelte: "#ff3e00",
+  Swift: "#F05138",
+  TypeScript: "#3178c6",
+  Vue: "#41b883",
+};
 
 function escapeXml(value) {
   return String(value)
@@ -92,63 +46,89 @@ function escapeXml(value) {
     .replaceAll("'", "&apos;");
 }
 
-async function loadProfileData() {
-  let after = null;
-  let repoCount = 0;
-  let totalStars = 0;
-  const languages = new Map();
-  let followers = 0;
-  let following = 0;
-  let privateRepoCount = 0;
+async function githubRequest(url) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "xijaja-profile-cards",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`GitHub API request failed: ${response.status} ${response.statusText} for ${url}\n${body}`);
+  }
+
+  return response.json();
+}
+
+async function loadUserProfile() {
+  return githubRequest(`https://api.github.com/users/${encodeURIComponent(login)}`);
+}
+
+async function loadOwnedRepos() {
+  const repos = [];
+  let page = 1;
 
   while (true) {
-    const data = await githubGraphql({ login, after });
-    const user = data.user;
+    const url = includePrivate
+      ? `https://api.github.com/user/repos?visibility=all&affiliation=owner&sort=updated&per_page=100&page=${page}`
+      : `https://api.github.com/users/${encodeURIComponent(login)}/repos?type=owner&sort=updated&per_page=100&page=${page}`;
 
-    if (!user) {
-      throw new Error(`User not found: ${login}`);
-    }
-
-    followers = user.followers.totalCount;
-    following = user.following.totalCount;
-    repoCount = user.repositories.totalCount;
-
-    for (const repo of user.repositories.nodes) {
-      totalStars += repo.stargazerCount;
-      if (repo.isPrivate) {
-        privateRepoCount += 1;
-      }
-
-      for (const edge of repo.languages.edges) {
-        const current = languages.get(edge.node.name) ?? {
-          name: edge.node.name,
-          color: edge.node.color || "#94a3b8",
-          size: 0,
-        };
-
-        current.size += edge.size;
-        if (!current.color && edge.node.color) {
-          current.color = edge.node.color;
-        }
-
-        languages.set(edge.node.name, current);
-      }
-    }
-
-    if (!user.repositories.pageInfo.hasNextPage) {
+    const pageRepos = await githubRequest(url);
+    if (!Array.isArray(pageRepos) || pageRepos.length === 0) {
       break;
     }
 
-    after = user.repositories.pageInfo.endCursor;
+    repos.push(...pageRepos.filter((repo) => !repo.fork && repo.owner?.login === login));
+    if (pageRepos.length < 100) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return repos;
+}
+
+async function loadRepoLanguages(repo) {
+  return githubRequest(repo.languages_url);
+}
+
+async function loadProfileData() {
+  const profile = await loadUserProfile();
+  const repos = await loadOwnedRepos();
+  let totalStars = 0;
+  let privateRepoCount = 0;
+  const languages = new Map();
+
+  for (const repo of repos) {
+    totalStars += repo.stargazers_count;
+    if (repo.private) {
+      privateRepoCount += 1;
+    }
+
+    const repoLanguages = await loadRepoLanguages(repo);
+    for (const [name, size] of Object.entries(repoLanguages)) {
+      const current = languages.get(name) ?? {
+        name,
+        color: languageColors[name] || "#94a3b8",
+        size: 0,
+      };
+
+      current.size += size;
+      languages.set(name, current);
+    }
   }
 
   const sortedLanguages = [...languages.values()].sort((left, right) => right.size - left.size);
   const totalLanguageBytes = sortedLanguages.reduce((sum, language) => sum + language.size, 0);
 
   return {
-    followers,
-    following,
-    repoCount,
+    followers: profile.followers,
+    following: profile.following,
+    repoCount: repos.length,
     totalStars,
     privateRepoCount,
     languages: sortedLanguages,
@@ -204,7 +184,7 @@ function renderStatsCard(theme, stats) {
   <rect x="0.5" y="0.5" width="459" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
   <text x="24" y="30" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="18" font-weight="700" fill="${palette.title}">${escapeXml(login)} GitHub Stats</text>
   <text x="24" y="146" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${escapeXml(note)}</text>
-  <text x="24" y="160" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">Generated from GitHub GraphQL API</text>
+  <text x="24" y="160" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">Generated from the GitHub REST API</text>
   ${tiles}
 </svg>`.trimStart();
 }
