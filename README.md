@@ -3,13 +3,13 @@
 <a href="https://github.com/xijaja">
   <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/xijaja/xijaja/output/top-langs-dark.svg">
-  <img alt="Shows xijaja's GitHub Top Languages." src="https://raw.githubusercontent.com/xijaja/xijaja/output/top-langs-light.svg" width="390" height="170">
+  <img alt="Shows xijaja's GitHub Top Languages." src="https://raw.githubusercontent.com/xijaja/xijaja/output/top-langs-light.svg" width="420" height="170">
 </picture>
 </a>
 <a href="https://github.com/xijaja">
   <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/xijaja/xijaja/output/stats-dark.svg">
-  <img alt="Shows xijaja's GitHub Stats." src="https://raw.githubusercontent.com/xijaja/xijaja/output/stats-light.svg" width="430" height="170">
+  <img alt="Shows xijaja's GitHub Stats." src="https://raw.githubusercontent.com/xijaja/xijaja/output/stats-light.svg" width="400" height="170">
 </picture>
 </a>
 

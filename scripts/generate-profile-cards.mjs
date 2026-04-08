@@ -158,20 +158,20 @@ async function loadProfileData() {
 function renderStatsCard(theme, stats) {
   const palette = theme === "dark"
     ? {
-        bg: "#0f172a",
-        border: "#1e293b",
-        title: "#60a5fa",
-        text: "#e5e7eb",
-        muted: "#94a3b8",
-        panel: "#111827",
+        bg: "#0d1117",
+        border: "#30363d",
+        title: "#2f81f7",
+        text: "#e6edf3",
+        muted: "#8b949e",
+        panel: "#161b22",
       }
     : {
-        bg: "#fffefc",
-        border: "#e5e7eb",
-        title: "#2563eb",
-        text: "#111827",
-        muted: "#6b7280",
-        panel: "#f8fafc",
+        bg: "#ffffff",
+        border: "#d0d7de",
+        title: "#0969da",
+        text: "#24292f",
+        muted: "#57606a",
+        panel: "#f6f8fa",
       };
 
   const metrics = [
@@ -184,19 +184,19 @@ function renderStatsCard(theme, stats) {
   const tiles = metrics.map((metric, index) => {
     const column = index % 2;
     const row = Math.floor(index / 2);
-    const x = 24 + column * 200;
+    const x = 24 + column * 186;
     const y = 54 + row * 50;
 
     return `
-      <rect x="${x}" y="${y}" width="176" height="40" rx="10" fill="${palette.panel}" />
+      <rect x="${x}" y="${y}" width="164" height="40" rx="6" fill="${palette.panel}" />
       <text x="${x + 14}" y="${y + 16}" font-size="11" fill="${palette.muted}">${escapeXml(metric.label)}</text>
       <text x="${x + 14}" y="${y + 31}" font-size="18" font-weight="700" fill="${palette.text}">${escapeXml(metric.value)}</text>
     `;
   }).join("");
 
   return `
-<svg width="430" height="170" viewBox="0 0 430 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} GitHub stats">
-  <rect x="0.5" y="0.5" width="429" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
+<svg width="400" height="170" viewBox="0 0 400 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} GitHub stats">
+  <rect x="0.5" y="0.5" width="399" height="169" rx="6" fill="${palette.bg}" stroke="${palette.border}" />
   <text x="24" y="30" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="18" font-weight="700" fill="${palette.title}">${escapeXml(login)} GitHub Stats</text>
   ${tiles}
 </svg>`.trimStart();
@@ -205,39 +205,39 @@ function renderStatsCard(theme, stats) {
 function renderLanguagesCard(theme, stats) {
   const palette = theme === "dark"
     ? {
-        bg: "#0f172a",
-        border: "#1e293b",
-        title: "#60a5fa",
-        text: "#e5e7eb",
-        muted: "#94a3b8",
-        track: "#1f2937",
+        bg: "#0d1117",
+        border: "#30363d",
+        title: "#2f81f7",
+        text: "#e6edf3",
+        muted: "#8b949e",
+        track: "#161b22",
       }
     : {
-        bg: "#fffefc",
-        border: "#e5e7eb",
-        title: "#2563eb",
-        text: "#111827",
-        muted: "#6b7280",
-        track: "#e5e7eb",
+        bg: "#ffffff",
+        border: "#d0d7de",
+        title: "#0969da",
+        text: "#24292f",
+        muted: "#57606a",
+        track: "#f6f8fa",
       };
 
   const topLanguages = stats.languages.slice(0, 5);
   const chart = topLanguages.map((language, index) => {
     const percent = stats.totalLanguageBytes > 0 ? (language.size / stats.totalLanguageBytes) * 100 : 0;
     const y = 52 + index * 23;
-    const width = Math.max(8, Math.round((percent / 100) * 170));
+    const width = Math.max(8, Math.round((percent / 100) * 190));
 
     return `
       <text x="24" y="${y}" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.text}">${escapeXml(language.name)}</text>
-      <rect x="124" y="${y - 9}" width="170" height="8" rx="4" fill="${palette.track}" />
-      <rect x="124" y="${y - 9}" width="${width}" height="8" rx="4" fill="${language.color || palette.title}" />
-      <text x="306" y="${y}" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${percent.toFixed(1)}%</text>
+      <rect x="132" y="${y - 9}" width="190" height="8" rx="4" fill="${palette.track}" />
+      <rect x="132" y="${y - 9}" width="${width}" height="8" rx="4" fill="${language.color || palette.title}" />
+      <text x="334" y="${y}" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="11" fill="${palette.muted}">${percent.toFixed(1)}%</text>
     `;
   }).join("");
 
   return `
-<svg width="390" height="170" viewBox="0 0 390 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} top languages">
-  <rect x="0.5" y="0.5" width="389" height="169" rx="16" fill="${palette.bg}" stroke="${palette.border}" />
+<svg width="420" height="170" viewBox="0 0 420 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} top languages">
+  <rect x="0.5" y="0.5" width="419" height="169" rx="6" fill="${palette.bg}" stroke="${palette.border}" />
   <text x="24" y="30" font-family="'Segoe UI', Ubuntu, Sans-Serif" font-size="18" font-weight="700" fill="${palette.title}">Top Languages</text>
   ${chart}
 </svg>`.trimStart();
