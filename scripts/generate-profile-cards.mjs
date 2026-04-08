@@ -1,10 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const token = process.env.PROFILE_TOKEN;
+const primaryToken = process.env.PROFILE_TOKEN?.trim() || "";
+const fallbackToken = process.env.PROFILE_FALLBACK_TOKEN?.trim() || "";
 const login = process.env.PROFILE_LOGIN;
 const outputDir = process.env.OUTPUT_DIR || "dist";
-const includePrivate = process.env.PROFILE_INCLUDE_PRIVATE === "true";
+const requestedPrivate = process.env.PROFILE_INCLUDE_PRIVATE === "true";
+const authState = {
+  token: primaryToken || fallbackToken,
+  canUsePrivate: requestedPrivate && Boolean(primaryToken),
+  fellBack: false,
+};
 
 if (!login) {
   throw new Error("Missing PROFILE_LOGIN");
@@ -47,13 +53,24 @@ function escapeXml(value) {
 }
 
 async function githubRequest(url) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "xijaja-profile-cards",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+  const makeHeaders = () => ({
+    Accept: "application/vnd.github+json",
+    "User-Agent": "xijaja-profile-cards",
+    ...(authState.token ? { Authorization: `Bearer ${authState.token}` } : {}),
   });
+
+  let response = await fetch(url, {
+    headers: makeHeaders(),
+  });
+
+  if (response.status === 401 && primaryToken && fallbackToken && !authState.fellBack) {
+    authState.token = fallbackToken;
+    authState.canUsePrivate = false;
+    authState.fellBack = true;
+    response = await fetch(url, {
+      headers: makeHeaders(),
+    });
+  }
 
   if (!response.ok) {
     const body = await response.text();
@@ -72,7 +89,7 @@ async function loadOwnedRepos() {
   let page = 1;
 
   while (true) {
-    const url = includePrivate
+    const url = authState.canUsePrivate
       ? `https://api.github.com/user/repos?visibility=all&affiliation=owner&sort=updated&per_page=100&page=${page}`
       : `https://api.github.com/users/${encodeURIComponent(login)}/repos?type=owner&sort=updated&per_page=100&page=${page}`;
 
@@ -133,6 +150,8 @@ async function loadProfileData() {
     privateRepoCount,
     languages: sortedLanguages,
     totalLanguageBytes,
+    includePrivate: authState.canUsePrivate,
+    usedFallbackToken: authState.fellBack,
   };
 }
 
@@ -175,9 +194,9 @@ function renderStatsCard(theme, stats) {
     `;
   }).join("");
 
-  const note = includePrivate
+  const note = stats.includePrivate
     ? `Private repositories included${stats.privateRepoCount ? ` (${stats.privateRepoCount})` : ""}`
-    : "Public repositories only";
+    : (stats.usedFallbackToken ? "Public repositories only (invalid TOKEN skipped)" : "Public repositories only");
 
   return `
 <svg width="460" height="170" viewBox="0 0 460 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} GitHub stats">
@@ -222,7 +241,9 @@ function renderLanguagesCard(theme, stats) {
     `;
   }).join("");
 
-  const note = includePrivate ? "Includes private repositories" : "Public repositories only";
+  const note = stats.includePrivate
+    ? "Includes private repositories"
+    : (stats.usedFallbackToken ? "Public only, because TOKEN is invalid" : "Public repositories only");
 
   return `
 <svg width="355" height="170" viewBox="0 0 355 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(login)} top languages">

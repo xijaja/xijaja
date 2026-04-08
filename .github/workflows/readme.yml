@@ -35,7 +35,8 @@ jobs:
 
             - name: Generate stats and top-langs SVGs
               env:
-                  PROFILE_TOKEN: ${{ secrets.TOKEN || github.token }}
+                  PROFILE_TOKEN: ${{ secrets.TOKEN }}
+                  PROFILE_FALLBACK_TOKEN: ${{ github.token }}
                   PROFILE_LOGIN: ${{ github.repository_owner }}
                   PROFILE_INCLUDE_PRIVATE: ${{ secrets.TOKEN != '' }}
               run: node scripts/generate-profile-cards.mjs
